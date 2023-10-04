@@ -1,0 +1,114 @@
+create table T as
+(select id,
+st_transform(geom,3857) as geom,
+field_6::date+field_7::time as point_timestamp
+from table1);
+
+create table one_line as
+(select st_makeline(geom) as geom from
+(select geom from T order by point_timestamp) as tg);
+
+alter table one_line
+add column begin_time timestamp, add column end_time timestamp,
+add column duration interval, add column length double precision;
+
+update one_line
+set begin_time=(select min(point_timestamp) from T),
+end_time=(select max(point_timestamp) from T),
+length=st_length(geom);
+
+update one_line set duration=end_time - begin_time;
+select begin_time, end_time, duration, length, geom from one_line;
+
+
+select length /extract(epoch from duration)
+as vel
+from one_line;
+
+select length /extract(epoch from duration)
+as vel
+from one_line;
+
+
+
+
+create table T as
+(select id,
+st_transform(geom,3857) as geom,
+field_6::date+field_7::time as point_timestamp
+from table1);
+
+create table segments as
+(select t1.id,
+st_makeline(t1.geom,t2.geom) as segment,
+t1.point_timestamp as begin, t2.point_timestamp as end,
+t2.point_timestamp - t1.point_timestamp as duration,
+st_length(st_makeline(t1.geom,t2.geom))as length
+from
+T as t1, T as t2
+where t2.id=t1.id+1);
+
+select * from segments
+
+alter table segments
+add column speed double precision;
+
+update segments
+set speed=length/extract(epoch from duration);
+
+select min(speed), max(speed), avg(speed), stddev(speed) from segments;
+
+SELECT id, ST_LineInterpolatePoint(segment, fraction) as pt
+FROM
+(SELECT id, segment, duration,
+((extract(epoch from timestamp'2008-10-24 13:03:00')-extract (epoch from begin)) /
+extract(epoch from duration)) as fraction
+FROM segments
+WHERE '2008-10-24 13:03:00' >= "begin"
+and '2008-10-24 13:03:00'<="end"
+)as tt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+st = 1.0; c1 = 0; c2 = 0;
+sc=0
+list1 = []; list2 = [];
+df['stop_id'] = 0;
+
+
+for i in range(len(df)):
+ 
+  if list1.len() > 40
+    sc+=1
+    for k in list1: df.loc[df['id'] == k, 'stop_id'] = sc
+    list1 = []
+  
+  if df.iloc[i].speed < st:
+    list1.append(i)
+  
+  else:
+    c2=0
+    for j in range(i,i+7):
+      if df.iloc[j].speed > st: c2+=1
+    if (c2 = 6) and list1.len() < 40: c1 = 1
+    else:
+        for a in range(i,j+1): list1.append(a)
